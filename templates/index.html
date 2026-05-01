@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dark Sky | Weather Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            background-attachment: fixed;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.07);
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="text-slate-200 min-h-screen font-sans p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
+            <div>
+                <h1 class="text-3xl font-black tracking-tighter text-white">MY DARK SKY<span class="text-blue-500">.</span></h1>
+                <p class="text-slate-500 text-sm font-medium uppercase tracking-widest">Precision Forecasting</p>
+            </div>
+            
+            <form action="/" method="GET" class="relative group">
+                <input type="text" name="city" placeholder="Search for a city..." 
+                       class="glass px-8 py-3 rounded-full outline-none focus:ring-2 focus:ring-blue-500 transition-all w-72 md:w-96 text-white placeholder-slate-500">
+                <button type="submit" class="absolute right-4 top-3 text-slate-400 group-hover:text-white transition-colors">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </form>
+
+        {% if weather %}
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            <div class="lg:col-span-3 space-y-8">
+                <div class="glass p-10 rounded-[2.5rem] relative overflow-hidden">
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h2 class="text-6xl font-bold text-white">{{ weather.name }}</h2>
+                                <p class="text-blue-400 text-xl mt-2 capitalize font-medium">{{ weather.weather[0].description }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-slate-400 font-medium">{{ current_date if current_date else "Today" }}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-10 mt-16">
+                            <span class="text-[8rem] font-black leading-none text-white tracking-tighter">
+                                {{ weather.main.temp|round }}°
+                            </span>
+                            <div class="grid grid-cols-2 gap-x-8 gap-y-2 text-lg">
+                                <p class="text-slate-400">Humidity: <span class="text-white font-bold">{{ weather.main.humidity }}%</span></p>
+                                <p class="text-slate-400">Wind: <span class="text-white font-bold">{{ weather.wind.speed }} m/s</span></p>
+                                <p class="text-slate-400">Pressure: <span class="text-white font-bold">{{ weather.main.pressure }} hPa</span></p>
+                                <p class="text-slate-400">Feels like: <span class="text-white font-bold">{{ weather.main.feels_like|round }}°</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl"></div>
+                </div>
+
+                <section>
+                    <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
+                        <i class="fa-solid fa-calendar-days text-blue-500"></i> 5-Day Forecast
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        {% if forecast %}
+                            {% for item in forecast.list if "12:00:00" in item.dt_txt %}
+                            <div class="glass p-6 rounded-3xl text-center card-hover">
+                                <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-3">
+                                    {{ item.dt_txt.split(' ')[0][5:] }}
+                                </p>
+                                <img src="http://openweathermap.org/img/wn/{{ item.weather[0].icon }}@2x.png" 
+                                     alt="weather icon" class="w-16 h-16 mx-auto">
+                                <p class="text-2xl font-bold text-white my-2">{{ item.main.temp|round }}°</p>
+                                <p class="text-[10px] text-slate-400 uppercase font-semibold">{{ item.weather[0].main }}</p>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-slate-500 italic">Forecast data currently unavailable.</p>
+                        {% endif %}
+                    </div>
+                </section>
+            </div>
+
+            <aside class="lg:col-span-1 space-y-6">
+                <div class="glass p-8 rounded-[2rem]">
+                    <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-slate-400"></i> Recent Searches
+                    </h3>
+                    <div class="space-y-4">
+                        {% for item in history %}
+                        <div class="flex justify-between items-center p-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group">
+                            <div>
+                                <p class="font-bold text-slate-200 group-hover:text-blue-400 transition-colors">{{ item.city }}</p>
+                                <p class="text-[10px] text-slate-500">{{ item.description }}</p>
+                            </div>
+                            <span class="text-xl font-black text-white">{{ item.temp|round }}°</span>
+                        </div>
+                        {% else %}
+                        <p class="text-slate-600 text-sm italic">No recent history.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="bg-blue-600/20 border border-blue-500/30 p-6 rounded-[2rem]">
+                    <i class="fa-solid fa-circle-info text-blue-400 mb-3"></i>
+                    <p class="text-xs leading-relaxed text-blue-200">
+                        Data is cached for 5 minutes to ensure high performance and precision.
+                    </p>
+                </div>
+            </aside>
+
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center justify-center py-32 text-center">
+            <div class="w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center mb-6">
+                <i class="fa-solid fa-cloud-sun text-4xl text-slate-600 animate-pulse"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white">Welcome to My Dark Sky</h2>
+            <p class="text-slate-500 mt-2 max-w-md">Type a city name in the search bar above to get minute-by-minute weather updates and forecasts.</p>
+        </div>
+        {% endif %}
+
+        <footer class="mt-20 pt-8 border-t border-white/5 text-center text-slate-600 text-[10px] uppercase tracking-[0.2em]">
+            <p>© 2026 Dark Sky Project • Developed for Qwasar Silicon Valley</p>
+        </footer>
+    </div>
+
+</body>
+</html>
